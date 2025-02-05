@@ -74,10 +74,12 @@ void setup() {
   String encodedImage = base64::encode(new_pic->buf, new_pic->len);
 
   HTTPClient http;
-  String url = "https://vision.googleapis.com/v1/images:annotate?key=" + apiKey;
+  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
 
   // Create the request body for the Vision API
-  String body = "{\"requests\": [{\"image\": {\"content\": \"" + encodedImage + "\"}, \"features\": [{\"type\": \"LABEL_DETECTION\", \"maxResults\": 5}]}]}";
+  // String body = "{\"requests\": [{\"image\": {\"content\": \"" + encodedImage + "\"}, \"features\": [{\"type\": \"IMAGE_DESCRIPTION\"}]}]}";
+
+  String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
 
   Serial.println("Request Body: " + body);
 
