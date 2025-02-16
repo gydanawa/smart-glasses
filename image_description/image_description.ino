@@ -87,7 +87,6 @@ void setup() {
   http.addHeader("Content-Type", "application/json");
 
   int httpResponseCode = http.POST(body);
-  Serial.println(httpResponseCode);
   Serial.println(http.getString());
 
   if (httpResponseCode == 200) {
