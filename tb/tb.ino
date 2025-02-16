@@ -10,9 +10,11 @@
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = ;  // Use your Google Vision API key
+String apiKey = "";  // Use your Google Vision API key
 
 WiFiClientSecure client;
+
+HTTPClient http;
 
 unsigned long lastCaptureTime = 0; // Last shooting time
 int imageCount = 1;                // File Counter
@@ -69,39 +71,10 @@ void setup() {
 
   client.setInsecure();
 
-  // new_pic = esp_camera_fb_get();
+  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
 
-  // String encodedImage = base64::encode(new_pic->buf, new_pic->len);
-
-  // HTTPClient http;
-  // String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
-
-  // // Create the request body for the Vision API
-  // // String body = "{\"requests\": [{\"image\": {\"content\": \"" + encodedImage + "\"}, \"features\": [{\"type\": \"IMAGE_DESCRIPTION\"}]}]}";
-
-  // String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
-
-  // Serial.println("Request Body: " + body);
-
-  // http.begin(client, url);
-  // http.addHeader("Content-Type", "application/json");
-
-  // int httpResponseCode = http.POST(body);
-  // Serial.println(http.getString());
-
-  // if (httpResponseCode == 200) {
-  //   String response = http.getString();
-  //   Serial.println("Response: " + response);  // Print the description
-  //   // Process the JSON response to extract and print a short description
-  //   int descriptionStart = response.indexOf("\"description\": \"") + 16;
-  //   int descriptionEnd = response.indexOf("\"", descriptionStart);
-  //   String description = response.substring(descriptionStart, descriptionEnd);
-  //   Serial.println("Image description: " + description);
-  // } else {
-  //   Serial.println("Error on HTTP request");
-  // }
-
-  // http.end();
+  http.begin(client, url);
+  http.addHeader("Content-Type", "application/json");
 }
 
 int testPictureCapture(){
@@ -112,17 +85,61 @@ int testPictureCapture(){
       errors++;
       Serial.println("Error occured with image capture.");
     }
-    if(i % 10 == 0){
-      Serial.print("Completed test: "); Serial.println(i);
-    }
+    // if(i % 10 == 0){
+    //   Serial.print("Completed test: "); Serial.println(i);
+    // }
     esp_camera_fb_return(new_pic);
   }
-  Serial.print("Total Errors: "); Serial.println(errors);
+  // Serial.print("Total Errors: "); Serial.println(errors);
   return errors;
 }
 
+int testApiResponse(void) {
+  int errors = 0;
+  for (int i=0; i<10; i++) {
+    // Serial.println(i);
+    camera_fb_t* new_pic = esp_camera_fb_get();
+    String encodedImage = base64::encode(new_pic->buf, new_pic->len);
+
+    String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
+    int httpResponseCode = http.POST(body);
+
+    if (httpResponseCode != 200) {
+      errors++;
+    }
+
+    esp_camera_fb_return(new_pic);
+  }
+
+  return errors;
+}
+
+
+
 void loop() {
-  // Loop logic here
+  
+  Serial.println("Beginning image capture test");
+
   int res = testPictureCapture();
-  delay(3000);
+  if (res > 0) {
+    Serial.print("\tTest failed, percent failure: "); Serial.println(res);
+  }
+  else {
+    Serial.println("\tTest passed, no errors");
+  }
+
+  Serial.println("\nBeginning API access test");
+
+  unsigned long start = millis();
+  res = testApiResponse();
+  unsigned long end = millis();
+  if (res > 0) {
+    Serial.print("\tTest failed, percent failure: "); Serial.println(res);
+  }
+  else {
+    Serial.println("\tTest passed, no errors");
+  }
+  Serial.print("\tAverage time for API response: "); Serial.print((float)(end-start)/10/1000); Serial.println("s");
+
+  delay(30000);
 }
