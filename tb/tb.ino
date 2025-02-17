@@ -85,19 +85,14 @@ int testPictureCapture(){
       errors++;
       Serial.println("Error occured with image capture.");
     }
-    // if(i % 10 == 0){
-    //   Serial.print("Completed test: "); Serial.println(i);
-    // }
     esp_camera_fb_return(new_pic);
   }
-  // Serial.print("Total Errors: "); Serial.println(errors);
   return errors;
 }
 
 int testApiResponse(void) {
   int errors = 0;
   for (int i=0; i<10; i++) {
-    // Serial.println(i);
     camera_fb_t* new_pic = esp_camera_fb_get();
     String encodedImage = base64::encode(new_pic->buf, new_pic->len);
 
@@ -122,7 +117,7 @@ void loop() {
 
   int res = testPictureCapture();
   if (res > 0) {
-    Serial.print("\tTest failed, percent failure: "); Serial.println(res);
+    Serial.print("\tTest failed, percent failure: "); Serial.println((float)res/100);
   }
   else {
     Serial.println("\tTest passed, no errors");
@@ -134,7 +129,7 @@ void loop() {
   res = testApiResponse();
   unsigned long end = millis();
   if (res > 0) {
-    Serial.print("\tTest failed, percent failure: "); Serial.println(res);
+    Serial.print("\tTest failed, percent failure: "); Serial.println((float)res/100);
   }
   else {
     Serial.println("\tTest passed, no errors");
