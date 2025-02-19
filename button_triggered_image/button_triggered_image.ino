@@ -16,10 +16,45 @@ WiFiClientSecure client;
 
 HTTPClient http;
 
-unsigned long lastCaptureTime = 0; // Last shooting time
-int imageCount = 1;                // File Counter
-bool camera_sign = false;          // Check camera status
-bool sd_sign = false;              // Check sd status
+bool send_image_flag = false;
+
+#define IMAGE_PIN 9
+
+void send_image(void) {
+  Serial.println("Function!");
+  camera_fb_t* new_pic = esp_camera_fb_get();
+
+  String encodedImage = base64::encode(new_pic->buf, new_pic->len);
+
+  String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
+  
+  int httpResponseCode = http.POST(body);
+
+  Serial.println(httpResponseCode);
+
+  String description;
+
+  if (httpResponseCode == 200) {
+    String response = http.getString();
+    int descriptionStart = response.indexOf("\"text\": \"") + 9;
+    int descriptionEnd = response.indexOf("\\n", descriptionStart);
+    description = response.substring(descriptionStart, descriptionEnd);
+    Serial.println("Image description: " + description);
+  } else {
+    Serial.println("ERROR WITH IMAGE: " + httpResponseCode);
+  }
+
+  esp_camera_fb_return(new_pic);
+}
+
+void ARDUINO_ISR_ATTR image_callback(void) {
+  send_image_flag = true;
+}
+
+void init_interrupt(void) {
+  pinMode(IMAGE_PIN, INPUT_PULLUP);
+  attachInterrupt(IMAGE_PIN, image_callback, FALLING);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -46,7 +81,7 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.frame_size = FRAMESIZE_UXGA;
   config.pixel_format = PIXFORMAT_JPEG; // for streaming
-  config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+  config.grab_mode = CAMERA_GRAB_LATEST;
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.frame_size = FRAMESIZE_QVGA;  // Options: FRAMESIZE_QQVGA, FRAMESIZE_QVGA, etc.
   config.jpeg_quality = 12;            // JPEG quality (lower is better quality)
@@ -59,8 +94,6 @@ void setup() {
     return;
   }
   
-  camera_sign = true; // Camera initialization check passes
-  
   WiFi.begin(ssid);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -71,71 +104,21 @@ void setup() {
 
   client.setInsecure();
 
+  // HTTPClient http;
   String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
 
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
+
+    
+  init_interrupt();
+  Serial.println("Button interrupt initialized");
 }
-
-int testPictureCapture(){
-  int errors = 0;
-  for (int i=1; i<101; i++){
-    camera_fb_t* new_pic = esp_camera_fb_get();
-    if (!(new_pic->buf[0] == 0xff && new_pic->buf[1] == 0xd8 && new_pic->buf[2] == 0xff && new_pic->buf[3] == 0xe0)) {
-      errors++;
-      Serial.println("Error occured with image capture.");
-    }
-    esp_camera_fb_return(new_pic);
-  }
-  return errors;
-}
-
-int testApiResponse(void) {
-  int errors = 0;
-  for (int i=0; i<10; i++) {
-    camera_fb_t* new_pic = esp_camera_fb_get();
-    String encodedImage = base64::encode(new_pic->buf, new_pic->len);
-
-    String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
-    int httpResponseCode = http.POST(body);
-
-    if (httpResponseCode != 200) {
-      Serial.println(http.getString());
-      errors++;
-    }
-
-    esp_camera_fb_return(new_pic);
-  }
-
-  return errors;
-}
-
-
 
 void loop() {
-  
-  Serial.println("Beginning image capture test");
-
-  int res = testPictureCapture();
-  if (res > 0) {
-    Serial.print("\tTest failed, percent failure: "); Serial.println((float)res/100);
+  if (send_image_flag) {
+    send_image();
+    send_image_flag = false;
   }
-  else {
-    Serial.println("\tTest passed, no errors");
-  }
-
-  Serial.println("\nBeginning API access test");
-
-  unsigned long start = millis();
-  res = testApiResponse();
-  unsigned long end = millis();
-  if (res > 0) {
-    Serial.print("\tTest failed, percent failure: "); Serial.println((float)res/100);
-  }
-  else {
-    Serial.println("\tTest passed, no errors");
-  }
-  Serial.print("\tAverage time for API response: "); Serial.print((float)(end-start)/10/1000); Serial.println("s");
-
-  delay(30000);
+  delay(100);
 }
