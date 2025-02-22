@@ -1,3 +1,5 @@
+#include <Audio.h>
+
 #include <Arduino.h>
 #include <google-tts.h>
 #include <WiFi.h>
@@ -18,7 +20,7 @@
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = "";  // Use your Google Vision API key
+String apiKey = "AIzaSyD_LpfQ_8XqSZSJj39cwqLVNsLoZe4dd04";  // Use your Google Vision API key
 
 WiFiClientSecure client;
 
@@ -29,37 +31,7 @@ bool send_image_flag = false;
 #define IMAGE_PIN 9
 
 Audio audio;
-
-void send_image(void) {
-  Serial.println("Function!");
-  camera_fb_t* new_pic = esp_camera_fb_get();
-
-  String encodedImage = base64::encode(new_pic->buf, new_pic->len);
-
-  String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
-  
-  int httpResponseCode = http.POST(body);
-
-  Serial.println(httpResponseCode);
-
-  String description;
-
-  if (httpResponseCode == 200) {
-    String response = http.getString();
-    int descriptionStart = response.indexOf("\"text\": \"") + 9;
-    int descriptionEnd = response.indexOf("\\n", descriptionStart);
-    description = response.substring(descriptionStart, descriptionEnd);
-    Serial.println("Image description: " + description);
-  } else {
-    Serial.println("ERROR WITH IMAGE: " + httpResponseCode);
-  }
-
-  esp_camera_fb_return(new_pic);
-  
-  String urlString = tts.getSpeechUrl(description);
-  const char* mp3URL = urlString.c_str();
-  audio.connecttohost();
-}
+TTS tts;
 
 void ARDUINO_ISR_ATTR image_callback(void) {
   send_image_flag = true;
@@ -104,7 +76,7 @@ void setup() {
   // camera init
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-    Serial.printf("Camera init failed with error 0x%x", err);
+    Serial.printfln("Camera init failed with error 0x%x", err);
     return;
   }
   
@@ -123,14 +95,43 @@ void setup() {
 
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
-
-  TTS tts;
-  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-  audio.setVolume(17);
     
   init_interrupt();
   Serial.println("Button interrupt initialized");
+
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(17);
+}
+
+void send_image(void) {
+  Serial.println("Function!");
+  camera_fb_t* new_pic = esp_camera_fb_get();
+
+  String encodedImage = base64::encode(new_pic->buf, new_pic->len);
+
+  String body = "{\"contents\": [{\"parts\": [{\"text\": \"Give a one sentence description of this scene.\"}, {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"" + encodedImage + "\"}}]}]}";
   
+  int httpResponseCode = http.POST(body);
+
+  Serial.println(httpResponseCode);
+
+  String description;
+
+  if (httpResponseCode == 200) {
+    String response = http.getString();
+    int descriptionStart = response.indexOf("\"text\": \"") + 9;
+    int descriptionEnd = response.indexOf("\\n", descriptionStart);
+    description = response.substring(descriptionStart, descriptionEnd);
+    Serial.println("Image description: " + description);
+  } else {
+    Serial.println("ERROR WITH IMAGE: " + httpResponseCode);
+  }
+
+  esp_camera_fb_return(new_pic);
+  
+  String urlString = tts.getSpeechUrl(description);
+  const char* mp3URL = urlString.c_str();
+  audio.connecttohost(mp3URL);
 }
 
 void loop() {
