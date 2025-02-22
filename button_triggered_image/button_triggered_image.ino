@@ -20,7 +20,7 @@
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = "AIzaSyD_LpfQ_8XqSZSJj39cwqLVNsLoZe4dd04";  // Use your Google Vision API key
+String apiKey = "";  // Use your Google Vision API key
 
 WiFiClientSecure client;
 
