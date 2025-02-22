@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#include <google-tts.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
@@ -7,6 +9,12 @@
 
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
+#include "Audio.h"
+
+// Define I2S connections
+#define I2S_DOUT  6
+#define I2S_BCLK  4
+#define I2S_LRC   5
 
 const char* ssid = "Device-Northwestern";
 
@@ -19,6 +27,8 @@ HTTPClient http;
 bool send_image_flag = false;
 
 #define IMAGE_PIN 9
+
+Audio audio;
 
 void send_image(void) {
   Serial.println("Function!");
@@ -45,6 +55,10 @@ void send_image(void) {
   }
 
   esp_camera_fb_return(new_pic);
+  
+  String urlString = tts.getSpeechUrl(description);
+  const char* mp3URL = urlString.c_str();
+  audio.connecttohost();
 }
 
 void ARDUINO_ISR_ATTR image_callback(void) {
@@ -110,9 +124,13 @@ void setup() {
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
 
+  TTS tts;
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(17);
     
   init_interrupt();
   Serial.println("Button interrupt initialized");
+  
 }
 
 void loop() {
@@ -120,5 +138,5 @@ void loop() {
     send_image();
     send_image_flag = false;
   }
-  delay(100);
+  audio.loop();
 }
