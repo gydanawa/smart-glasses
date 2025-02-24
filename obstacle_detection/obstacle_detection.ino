@@ -11,7 +11,13 @@ Mode and Median filters are recommended.
 
 const int anPin1 = 3;
 const int motorPin = 43;
+
 const int cancelPin = 9;
+// int buttonState;
+// int lastButtonState = LOW;
+
+// unsigned long lastDebounceTime = 0;
+// unsigned long debounceDelay = 50;
 
 double adc_value;
 double distance1;
@@ -30,6 +36,7 @@ void setup() {
   analogReadResolution(12);
   pinMode(anPin1, INPUT);
   pinMode(cancelPin, INPUT_PULLUP);
+  pinMode(motorPin, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(cancelPin), ISR_button_pressed, FALLING);
 }
 
@@ -38,7 +45,7 @@ void ISR_button_pressed(void)
   //toggle the cancel button signal
   cancel_button = !cancel_button;
   Serial.println("interrupt triggered");
-  Serial.print(cancel_button);
+  Serial.println(cancel_button);
 }
 
 void check_threshold() {
@@ -69,7 +76,7 @@ void read_sensors() {
   //XIAO ESP32S3 goes from 0 to 4095, so divide by 8 to get inches
   //distance1 = analogRead(anPin1)/8;
   adc_value = analogRead(anPin1);
-  distance1 = (adc_value * 512.0) / 4095.0;
+  distance1 = (adc_value * 512.0) / 4096.0 /2; //20 in = 45; 25 in = 50; 30 in = 60, 40 in = 68 almost 70
 
   //update distances vector
   for (int i=4; i>0; i--) {
@@ -106,11 +113,13 @@ void print_all() {
 }
 
 void loop() {
-  // read_sensors();
-  // check_threshold();
-  // print_all();
-  // delay(50);
+  read_sensors();
+  check_threshold();
+  print_all();
+  delay(50);
 
-  analogWrite(motorPin, 255);
+  // analogWrite(motorPin, 255);
+  // digitalWrite(motorPin, HIGH);
+ 
 
 }
