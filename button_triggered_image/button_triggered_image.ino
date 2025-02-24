@@ -71,7 +71,7 @@ void setup() {
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.frame_size = FRAMESIZE_QVGA;  // Options: FRAMESIZE_QQVGA, FRAMESIZE_QVGA, etc.
   config.jpeg_quality = 12;            // JPEG quality (lower is better quality)
-  config.fb_count = 1;
+  config.fb_count = 2;
 
   // camera init
   esp_err_t err = esp_camera_init(&config);
