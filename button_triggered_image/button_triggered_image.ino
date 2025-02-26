@@ -27,6 +27,9 @@ WiFiClientSecure client;
 HTTPClient http;
 
 bool send_image_flag = false;
+bool wait_for_audio = false;
+unsigned long startTime = 0;
+unsigned long stopLength = 0;
 
 #define IMAGE_PIN 9
 
@@ -132,6 +135,9 @@ void send_image(void) {
   String urlString = tts.getSpeechUrl(description);
   const char* mp3URL = urlString.c_str();
   audio.connecttohost(mp3URL);
+  wait_for_audio = true;
+  startTime = millis();
+  stopLength = description.length()*1000/12;
 }
 
 void loop() {
@@ -140,4 +146,12 @@ void loop() {
     send_image_flag = false;
   }
   audio.loop();
+  unsigned long now = millis();
+  if (wait_for_audio && (now - startTime > stopLength)) {
+    Serial.println(audio.getFileSize());
+    Serial.println(audio.getFilePos());
+    Serial.println(audio.getTotalPlayingTime());
+    wait_for_audio = false;
+    audio.stopSong();
+  }
 }
