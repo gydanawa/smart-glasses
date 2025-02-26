@@ -91,7 +91,7 @@ void setup() {
   client.setInsecure();
 
   // HTTPClient http;
-  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
+  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + apiKey;
 
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
