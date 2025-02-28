@@ -7,21 +7,15 @@ Please note that we do not recommend using averaging with our sensors.
 Mode and Median filters are recommended.
 */
 
-#define THRESHOLD 60
+#define THRESHOLD 36
 
 const int anPin1 = 3;
 const int motorPin = 43;
-
 const int cancelPin = 9;
-// int buttonState;
-// int lastButtonState = LOW;
-
-// unsigned long lastDebounceTime = 0;
-// unsigned long debounceDelay = 50;
 
 double adc_value;
 double distance1;
-int threshold = 60;
+int threshold = 48;
 
 double avg_distance;
 double distances[5];
@@ -60,7 +54,7 @@ void check_threshold() {
 
   //control the motor output
   if (obstacle_flag && !cancel_button) {
-    analogWrite(motorPin, 250);
+    analogWrite(motorPin, 125);
     Serial.println("motor on");
   }
   else if (!obstacle_flag || cancel_button) {
@@ -117,9 +111,4 @@ void loop() {
   check_threshold();
   print_all();
   delay(50);
-
-  // analogWrite(motorPin, 255);
-  // digitalWrite(motorPin, HIGH);
- 
-
 }
