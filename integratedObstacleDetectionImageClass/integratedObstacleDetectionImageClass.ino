@@ -30,6 +30,8 @@ int threshold = 48;
 double avg_distance;
 double distances[5];
 
+String obstacleDetectedMessage = "Obstacle detected!";
+
 //flags
 bool obstacle_flag = 0;
 bool cancel_button = 0;
@@ -147,6 +149,14 @@ void check_threshold() {
   if (obstacle_flag && !cancel_button) {
     analogWrite(motorPin, 125);
     Serial.println("motor on");
+
+    //send the audio message
+    String urlString = tts.getSpeechUrl(obstacleDetectedMessage);
+    const char* mp3URL = urlString.c_str();
+    audio.connecttohost(mp3URL);
+    wait_for_audio = true;
+    startTime = millis();
+    stopLength = description.length()*1000/12;
   }
   else if (!obstacle_flag || cancel_button) {
     analogWrite(motorPin, 0);
