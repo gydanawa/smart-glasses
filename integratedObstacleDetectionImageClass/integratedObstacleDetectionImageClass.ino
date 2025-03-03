@@ -20,7 +20,6 @@
 #define THRESHOLD 36
 
 const int anPin1 = 3;
-const int motorPin = 43;
 const int cancelPin = 9;
 
 double adc_value;
@@ -55,7 +54,9 @@ Audio audio;
 TTS tts;
 
 void ARDUINO_ISR_ATTR image_callback(void) {
-  send_image_flag = true;
+  if (!wait_for_audio) {
+    send_image_flag = true;
+  }
 }
 
 void init_interrupt(void) {
@@ -125,7 +126,6 @@ void setup() {
   analogReadResolution(12);
   pinMode(anPin1, INPUT);
   pinMode(cancelPin, INPUT_PULLUP);
-  pinMode(motorPin, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(cancelPin), ISR_button_pressed, FALLING);
 }
 void ISR_button_pressed(void) 
@@ -147,19 +147,17 @@ void check_threshold() {
 
   //control the motor output
   if (obstacle_flag && !cancel_button) {
-    analogWrite(motorPin, 125);
     Serial.println("motor on");
 
     //send the audio message
-    String urlString = tts.getSpeechUrl(obstacleDetectedMessage);
-    const char* mp3URL = urlString.c_str();
-    audio.connecttohost(mp3URL);
-    wait_for_audio = true;
-    startTime = millis();
-    stopLength = description.length()*1000/12;
-  }
-  else if (!obstacle_flag || cancel_button) {
-    analogWrite(motorPin, 0);
+    if (!wait_for_audio) {
+      String urlString = tts.getSpeechUrl(obstacleDetectedMessage);
+      const char* mp3URL = urlString.c_str();
+      audio.connecttohost(mp3URL);
+      wait_for_audio = true;
+      startTime = millis();
+      stopLength = 4000;
+    }
   }
 }
 void read_sensors() {
@@ -245,9 +243,6 @@ void loop() {
   audio.loop();
   unsigned long now = millis();
   if (wait_for_audio && (now - startTime > stopLength)) {
-    //Serial.println(audio.getFileSize());
-    //Serial.println(audio.getFilePos());
-    //Serial.println(audio.getTotalPlayingTime());
     wait_for_audio = false;
     audio.stopSong();
   }
