@@ -44,7 +44,9 @@ WiFiClientSecure client;
 HTTPClient http;
 
 bool send_image_flag = false;
-bool wait_for_audio = false;
+bool wait_for_obstacle_audio = false;
+bool wait_for_image_audio = false;
+
 unsigned long startTime = 0;
 unsigned long stopLength = 0;
 
@@ -54,7 +56,7 @@ Audio audio;
 TTS tts;
 
 void ARDUINO_ISR_ATTR image_callback(void) {
-  if (!wait_for_audio) {
+  if (!wait_for_obstacle_audio && !wait_for_image_audio) {
     send_image_flag = true;
   }
 }
@@ -150,13 +152,13 @@ void check_threshold() {
     Serial.println("motor on");
 
     //send the audio message
-    if (!wait_for_audio) {
+    if (!wait_for_obstacle_audio) { //check only obstacle flag since obstacle takes precedence over image
       String urlString = tts.getSpeechUrl(obstacleDetectedMessage);
       const char* mp3URL = urlString.c_str();
       audio.connecttohost(mp3URL);
-      wait_for_audio = true;
+      wait_for_obstacle_audio = true;
       startTime = millis();
-      stopLength = 4000;
+      stopLength = 3000;
     }
   }
 }
@@ -230,7 +232,7 @@ void send_image(void) {
   String urlString = tts.getSpeechUrl(description);
   const char* mp3URL = urlString.c_str();
   audio.connecttohost(mp3URL);
-  wait_for_audio = true;
+  wait_for_image_audio = true;
   startTime = millis();
   stopLength = description.length()*1000/12;
 }
@@ -242,10 +244,16 @@ void loop() {
   }
   audio.loop();
   unsigned long now = millis();
-  if (wait_for_audio && (now - startTime > stopLength)) {
-    wait_for_audio = false;
+
+  if (wait_for_image_audio && (now - startTime > stopLength)) {
+    wait_for_image_audio = false;
     audio.stopSong();
   }
+  if (wait_for_obstacle_audio && (now - startTime > stopLength)) {
+    wait_for_obstacle_audio = false;
+    audio.stopSong();
+  }
+  
   read_sensors();
   check_threshold();
   print_all();
