@@ -7,7 +7,15 @@ Please note that we do not recommend using averaging with our sensors.
 Mode and Median filters are recommended.
 */
 
+#include "filter_lib.h"
+
 #define THRESHOLD 36
+
+// create filter with 2 Hz cut-off frequency
+lowpass_filter lowpassFilter(2); 
+
+float raw_signal;
+float filtered_signal;
 
 const int anPin1 = 3;
 const int motorPin = 43;
@@ -19,6 +27,7 @@ int threshold = 48;
 
 double avg_distance;
 double distances[5];
+double filtered_distances[5];
 
 //flags
 bool obstacle_flag = 0;
@@ -73,17 +82,26 @@ void read_sensors() {
   distance1 = (adc_value * 512.0) / 4096.0 /2; //20 in = 45; 25 in = 50; 30 in = 60, 40 in = 68 almost 70
 
   //update distances vector
+  Serial.print("Raw = ");
   for (int i=4; i>0; i--) {
     distances[i] = distances[i-1];
+    Serial.print(distances[i]);
+    Serial.print(", ");
   }
   distances[0] = distance1;
 
+  
   //average the measurements
+  Serial.print("Filtered = ");
   double total = 0.00;
   for (int i=0; i<5; i++) {
     //sum distances array
-    total += distances[i];
+    filtered_distances[i] = lowpassFilter.filter(distances[i]);
+    Serial.print(filtered_distances[i]);
+    Serial.print(", ");
+    total += filtered_distances[i];
   }
+  
   avg_distance = total/5;
   
   
