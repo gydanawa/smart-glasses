@@ -37,7 +37,7 @@ bool cancel_button = 0;
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = "";  // Use your Google Vision API key
+String apiKey = "AIzaSyCNlcIOl0tEP3oSzyzULcodc07hK0EiuF8";  // Use your Google Vision API key
 
 WiFiClientSecure client;
 
@@ -103,6 +103,9 @@ void setup() {
     Serial.printf("Camera init failed with error 0x%x\n", err);
     return;
   }
+  else {
+    Serial.printf("Camera init successful!\n");
+  }
   
   WiFi.begin(ssid);
 
@@ -129,6 +132,33 @@ void setup() {
   pinMode(anPin1, INPUT);
   pinMode(cancelPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(cancelPin), ISR_button_pressed, FALLING);
+
+  String urlString = tts.getSpeechUrl("");
+  const char* mp3URL = urlString.c_str();
+  if (urlString.indexOf("http") >= 0) {
+    Serial.println("TTS init sucessful!");
+  }
+  else {
+    Serial.println("TTS init failed.");
+  }
+
+  bool res = audio.connecttohost(mp3URL);
+  if (res) {
+    Serial.println("Audio module init successful!");
+  }
+  else {
+    Serial.println("Audio module init failed.");
+  }
+
+  double init_adc_value = analogRead(anPin1);
+  if (init_adc_value > 0) {
+    Serial.println("Ultrasonic sensor init successful!");
+  }
+  else {
+    Serial.println("Ultrasonic sensor init failed.");
+  }
+
+  delay(3000);
 }
 void ISR_button_pressed(void) 
 {
