@@ -10,7 +10,7 @@
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = "";  // Use your Google Vision API key
+String apiKey = "AIzaSyCNlcIOl0tEP3oSzyzULcodc07hK0EiuF8";  // Use your Google Vision API key
 
 WiFiClientSecure client;
 
@@ -71,7 +71,7 @@ void setup() {
 
   client.setInsecure();
 
-  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=" + apiKey;
+  String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + apiKey;
 
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
@@ -84,6 +84,12 @@ int testPictureCapture(){
     if (!(new_pic->buf[0] == 0xff && new_pic->buf[1] == 0xd8 && new_pic->buf[2] == 0xff && new_pic->buf[3] == 0xe0)) {
       errors++;
       Serial.println("Error occured with image capture.");
+    }
+    if (i == 1) {
+      Serial.printf("Size: %d\n", sizeof(camera_fb_t));
+      Serial.printf("Len: %d\n", new_pic->len);
+      Serial.printf("Len: %d\n", new_pic->width);
+      Serial.printf("Len: %d\n", new_pic->height);
     }
     esp_camera_fb_return(new_pic);
   }

@@ -3,8 +3,9 @@ from google.genai import types
 
 import PIL.Image
 import os
+import time
 
-client = genai.Client(api_key="AIzaSyD9K1JxIJ7BJrsFG-tSpKiMmZ8USI0TqF0")
+client = genai.Client(api_key="AIzaSyCNlcIOl0tEP3oSzyzULcodc07hK0EiuF8")
 
 num_cars = 0
 num_crosswalks = 0
@@ -12,6 +13,7 @@ num_roads = 0
 total_pics = 0
 
 directory = "PhotosOfIntersectionStreet"
+start_time = time.perf_counter()
 for filename in os.listdir(directory):
         
     image = PIL.Image.open(os.path.join(directory, filename))
@@ -35,7 +37,6 @@ for filename in os.listdir(directory):
 
     if "road" in answer or "street" in answer:
         num_roads = num_roads + 1
-
 
 print("\nTEST CONCLUDED:  Intersection with no cars")
 
@@ -120,3 +121,7 @@ print("\nTEST CONCLUDED:  Sidewalk")
 print(f"Percent of pictures labelled with 'car': {num_cars/total_pics*100}%")
 print(f"Percent of pictures labelled with 'crosswalk': {num_crosswalks/total_pics*100}%")
 print(f"Percent of pictures labelled with 'road': {num_roads/total_pics*100}%")
+
+end_time = time.perf_counter()
+
+print(f"Average image description time: {(end_time-start_time)/20:.2f}s")
