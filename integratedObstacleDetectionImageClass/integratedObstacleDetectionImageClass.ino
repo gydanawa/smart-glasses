@@ -8,6 +8,7 @@
 #include <base64.h>  // You might need to include base64 library for encoding image data
 
 #include "esp_camera.h"
+#include "filter_lib.h"
 
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
@@ -28,6 +29,10 @@ int threshold = 48;
 
 double avg_distance;
 double distances[5];
+double filtered_distances[5];
+
+// create filter with 2 Hz cut-off frequency
+lowpass_filter lowpassFilter(2); 
 
 String obstacleDetectedMessage = "Obstacle detected!";
 
@@ -207,11 +212,12 @@ void read_sensors() {
   }
   distances[0] = distance1;
 
-  //average the measurements
+  //low pass filter and average the measurements
   double total = 0.00;
   for (int i=0; i<5; i++) {
     //sum distances array
-    total += distances[i];
+    filtered_distances[i] = lowpassFilter.filter(distances[i]);
+    total += filtered_distances[i];
   }
   avg_distance = total/5;
   
