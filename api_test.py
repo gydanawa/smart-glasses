@@ -5,14 +5,14 @@ import PIL.Image
 import os
 import time
 
-client = genai.Client(api_key="AIzaSyCNlcIOl0tEP3oSzyzULcodc07hK0EiuF8")
+client = genai.Client(api_key="AIzaSyCRGXhdUjLRwPTfMWXdZVgaectucXey2JM")
 
-num_cars = 0
-num_crosswalks = 0
-num_roads = 0
+num_cars_a = 0
+num_cars_b = 0
+num_cars_c = 0
 total_pics = 0
 
-directory = "PhotosOfIntersectionStreet"
+directory = "PhotosOfOncomingCar"
 start_time = time.perf_counter()
 for filename in os.listdir(directory):
         
@@ -25,103 +25,36 @@ for filename in os.listdir(directory):
 
     answer = response.text.lower()
 
-    print(answer)
-
     total_pics = total_pics + 1
 
-    if "car " in answer or "cars " in answer or "vehicles" in answer:
-        num_cars = num_cars + 1
-
-    if "crosswalk" in answer or "intersection" in answer:
-        num_crosswalks = num_crosswalks + 1
-
     if "road" in answer or "street" in answer:
-        num_roads = num_roads + 1
-
-print("\nTEST CONCLUDED:  Intersection with no cars")
-
-print(f"Percent of pictures labelled with 'car': {num_cars/total_pics*100}%")
-print(f"Percent of pictures labelled with 'crosswalk': {num_crosswalks/total_pics*100}%")
-print(f"Percent of pictures labelled with 'road': {num_roads/total_pics*100}%")
-
-
-
-num_cars = 0
-num_crosswalks = 0
-num_roads = 0
-total_pics = 0
-
-directory = "PhotosOfOncomingCar"
-for filename in os.listdir(directory):
-        
-    image = PIL.Image.open(os.path.join(directory, filename))
-    print(f"Processing {filename}...")
+        num_cars_a = num_cars_a + 1
 
     response = client.models.generate_content(
         model="gemini-2.0-flash-lite-preview-02-05",
-        contents=["This camera is mounted on glasses used by a visually impaired person. Give a one sentence description that will help them navigate life.", image])
-
+        contents=["This camera is mounted on glasses used by a visually impaired person. Give a one sentence description that will help them navigate the world.", image])
+    
     answer = response.text.lower()
-
+    
     print(answer)
 
-    total_pics = total_pics + 1
-
-    if "car " in answer or "cars " in answer or "vehicles" in answer:
-        num_cars = num_cars + 1
-
-    if "crosswalk" in answer or "intersection" in answer:
-        num_crosswalks = num_crosswalks + 1
-
     if "road" in answer or "street" in answer:
-        num_roads = num_roads + 1
-
-
-print("\nTEST CONCLUDED:  Oncoming car")
-
-print(f"Percent of pictures labelled with 'car': {num_cars/total_pics*100}%")
-print(f"Percent of pictures labelled with 'crosswalk': {num_crosswalks/total_pics*100}%")
-print(f"Percent of pictures labelled with 'road': {num_roads/total_pics*100}%")
-
-
-
-num_cars = 0
-num_crosswalks = 0
-num_roads = 0
-total_pics = 0
-
-directory = "PhotosOfSidewalk"
-for filename in os.listdir(directory):
-        
-    image = PIL.Image.open(os.path.join(directory, filename))
-    print(f"Processing {filename}...")
+        num_cars_b = num_cars_b + 1
 
     response = client.models.generate_content(
         model="gemini-2.0-flash-lite-preview-02-05",
-        contents=["This camera is mounted on glasses used by a visually impaired person. Give a one sentence description that will help them navigate life.", image])
-
+        contents=["Describe this picture focusing mainly on hazards for a pedestrian.", image])
+    
     answer = response.text.lower()
 
-    print(answer)
+    if "road" in answer or "street" in answer:
+        num_cars_c = num_cars_c + 1
 
-    total_pics = total_pics + 1
+print("\nTEST CONCLUDED:  \"road\"")
 
-    if "car " in answer or "cars " in answer or "vehicles" in answer:
-        num_cars = num_cars + 1
-
-    if "crosswalk" in answer or "sidewalk" in answer or "path" in answer:
-        num_crosswalks = num_crosswalks + 1
-
-    if "road" in answer or "street" in answer or "intersection" in answer:
-        num_roads = num_roads + 1
-
-
-print("\nTEST CONCLUDED:  Sidewalk")
-
-print(f"Percent of pictures labelled with 'car': {num_cars/total_pics*100}%")
-print(f"Percent of pictures labelled with 'crosswalk': {num_crosswalks/total_pics*100}%")
-print(f"Percent of pictures labelled with 'road': {num_roads/total_pics*100}%")
-
-end_time = time.perf_counter()
-
-print(f"Average image description time: {(end_time-start_time)/20:.2f}s")
+print("Prompt: Describe this scene in one sentence.")
+print(f"\tPercent of responses containing \"road\": {num_cars_a/total_pics*100}%")
+print("Prompt: This camera is mounted on glasses used by a visually impaired person. Give a one sentence description that will help them navigate the world.")
+print(f"\tPercent of responses containing \"road\": {num_cars_b/total_pics*100}%")
+print("Prompt: Describe this picture focusing mainly on hazards for a pedestrian.")
+print(f"\tPercent of responses containing \"road\": {num_cars_c/total_pics*100}%")

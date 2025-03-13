@@ -42,7 +42,7 @@ bool cancel_button = 0;
 
 const char* ssid = "Device-Northwestern";
 
-String apiKey = "AIzaSyCNlcIOl0tEP3oSzyzULcodc07hK0EiuF8";  // Use your Google Vision API key
+String apiKey = "AIzaSyCRGXhdUjLRwPTfMWXdZVgaectucXey2JM";  // Use your Google Vision API key
 
 WiFiClientSecure client;
 
